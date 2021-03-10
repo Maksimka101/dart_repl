@@ -172,7 +172,6 @@ void main() {
             CodeField(
               focusNode: _editorFocus,
               controller: _codeController,
-              onTap: ,
               maxLines: null,
               decoration: InputDecoration(
                 border: InputBorder.none,
