@@ -56,7 +56,7 @@ import 'dart:io';
 
 void main() {
   final name = stdin.readLineSync();
-  print("Hello, ${name ?? "world"}");
+  print("Hello, ${name.isEmpty ? "world" : name}");
 }
 """;
     super.initState();

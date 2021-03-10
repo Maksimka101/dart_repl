@@ -1,16 +1,20 @@
-# dart_repl
+# Dart REPL
 
-A new Flutter project.
+This is a proof of concept of REPL implementation for dart
 
-## Getting Started
+## Screenshots
 
-This project is a starting point for a Flutter application.
+![Editor screen](https://github.com/Maksimka101/dart_repl/blob/master/assets/screenshots/mac_os/editor.png?raw=true)
 
-A few resources to get you started if this is your first Flutter project:
+## Features
+- Colored code editor 
+- Ability to run dart command line app
+- Ability to communicate with running app wia stdin/stdout
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+## Roadmap
+- Better code editor
+- Keyboard shortcuts
+- Refactor
+- Suggestions
+- Settings
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
