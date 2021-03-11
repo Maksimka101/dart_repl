@@ -10,6 +10,10 @@ This is a proof of concept of REPL implementation for dart
 - Colored code editor 
 - Ability to run dart command line app
 - Ability to communicate with running app wia stdin/stdout
+- Shortcuts:
+    - run with `command + r`
+    - copy whole line with `command + c` without selection
+    - undo with `command + z`
 
 ## Roadmap
 - Better code editor

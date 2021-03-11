@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:dart_repl/code_field.dart';
+import 'package:dart_repl/code_editor.dart';
 import 'package:dart_repl/code_field_controller.dart';
 import 'package:dart_repl/std_history.dart';
 import 'package:dart_repl/syntax_highlighter.dart';
@@ -46,19 +46,10 @@ class _EditorScreenState extends State<EditorScreen> {
   Process _replProcess;
   final _stdInFocus = FocusNode();
   final _editorFocus = FocusNode();
-  final _keyboardEventsFocus =FocusNode();
 
   @override
   void initState() {
     _codeController = CodeEditingController(DartSyntaxHighLighter());
-    _codeController.text = r"""
-import 'dart:io';
-
-void main() {
-  final name = stdin.readLineSync();
-  print("Hello, ${name.isEmpty ? "world" : name}");
-}
-""";
     super.initState();
   }
 
@@ -99,12 +90,6 @@ void main() {
       _replProcess = null;
       setState(() {});
     });
-  }
-
-  void _onRawKeyboardEvent(RawKeyEvent keyEvent) {
-    if (keyEvent.data.isControlPressed) {
-      print("CONTROL");
-    }
   }
 
   Widget _buildUserInput() {
@@ -157,33 +142,25 @@ void main() {
 
   @override
   Widget build(BuildContext context) {
-    return RawKeyboardListener(
-      focusNode: _keyboardEventsFocus,
-      autofocus: true,
-      onKey: _onRawKeyboardEvent,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text("Dart R.E.P.L."),
-          toolbarHeight: 45,
-        ),
-        body: ListView(
-          padding: EdgeInsets.all(8),
-          children: [
-            CodeField(
-              focusNode: _editorFocus,
-              controller: _codeController,
-              maxLines: null,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-              ),
-            ),
-            _buildStdHistory(),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(_replProcess == null ? Icons.play_arrow : Icons.pause),
-          onPressed: _onRunTapped,
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Dart R.E.P.L."),
+        toolbarHeight: 45,
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(8),
+        children: [
+          CodeEditor(
+            onRun: _onRunTapped,
+            editorFocusNode: _editorFocus,
+            codeController: _codeController,
+          ),
+          _buildStdHistory(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(_replProcess == null ? Icons.play_arrow : Icons.pause),
+        onPressed: _onRunTapped,
       ),
     );
   }

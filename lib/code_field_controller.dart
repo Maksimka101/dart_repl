@@ -1,4 +1,5 @@
 import 'package:dart_repl/syntax_highlighter.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 class CodeEditingController extends ValueNotifier<TextEditingValue>
@@ -20,7 +21,13 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// [TextEditingValue.empty].
   CodeEditingController.fromValue(
       TextEditingValue value, this.syntaxHighlighter)
-      : super(value ?? TextEditingValue.empty);
+      : super(value ?? TextEditingValue.empty) {
+    addListener(() {
+      print("Text changed");
+    });
+  }
+
+  final _codeHistory = CodeHistory();
 
   /// The current string the user is editing.
   String get text => value.text;
@@ -50,6 +57,8 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
     // if (!value.composing.isValid || !withComposing) {
     //   return TextSpan(style: style, text: text);
     // }
+
+    _codeHistory.add(CodeHistoryNode(value.text, value.selection));
 
     var lsSpans = syntaxHighlighter.parseText(value);
 
@@ -92,6 +101,48 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
     value = TextEditingValue.empty;
   }
 
+  /// Set previous state of text
+  void undo() {
+    final previous = _codeHistory.previous();
+    if (previous != null) {
+      value = TextEditingValue(
+        text: previous.text,
+        selection: previous.selection,
+      );
+    }
+  }
+
+  /// If text selected then copy selected text [implicitly by flutter]
+  /// If text is not selected copy all string
+  void copyText() {
+    if (selection.isCollapsed) {
+      final rawText = text;
+      final cursorIndex = selection.start;
+      var beforeCursor = cursorIndex;
+      var afterCursor = cursorIndex;
+      for (;
+          beforeCursor != -1 && rawText[beforeCursor] != '\n';
+          beforeCursor--) {}
+      for (;
+          afterCursor != rawText.length && rawText[afterCursor] != '\n';
+          afterCursor++) {}
+      final line = "\n${rawText.substring(beforeCursor++, afterCursor)}\n";
+
+      Clipboard.setData(ClipboardData(text: line));
+      Clipboard.getData(Clipboard.kTextPlain).then((value) => print(value.text));
+      selection = TextSelection(
+        baseOffset: beforeCursor,
+        extentOffset: afterCursor,
+      );
+    }
+  }
+
+  /// Set next state of text
+  /// Now id doesn't work
+  void restore() {
+    // todo: implement restore
+  }
+
   /// Check that the [selection] is inside of the bounds of [text].
   bool isSelectionWithinTextBounds(TextSelection selection) {
     return selection.start <= text.length && selection.end <= text.length;
@@ -110,4 +161,59 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   void clearComposing() {
     value = value.copyWith(composing: TextRange.empty);
   }
+}
+
+class CodeHistory {
+  CodeHistory([this.capacity = 100]);
+
+  final _historyNodes = <CodeHistoryNode>[];
+  final int capacity;
+  var _currentNodeIndex = -1;
+
+  void add(CodeHistoryNode node) {
+    // If the last node is the same as new node
+    if (_currentNodeIndex != -1 &&
+        (_historyNodes[_currentNodeIndex] == node ||
+            _historyNodes.last == node)) {
+      return;
+    }
+
+    if (_currentNodeIndex + 1 != _historyNodes.length) {
+      _historyNodes.removeRange(_currentNodeIndex + 1, _historyNodes.length);
+    }
+
+    if (_historyNodes.length - 1 == capacity) {
+      _currentNodeIndex--;
+      _historyNodes.removeAt(0);
+    }
+
+    _currentNodeIndex++;
+    _historyNodes.add(node);
+  }
+
+  CodeHistoryNode previous() {
+    if (_currentNodeIndex == -1) {
+      return null;
+    }
+
+    return _historyNodes[_currentNodeIndex--];
+  }
+}
+
+class CodeHistoryNode {
+  CodeHistoryNode(this.text, this.selection);
+
+  final String text;
+  final TextSelection selection;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CodeHistoryNode &&
+          runtimeType == other.runtimeType &&
+          text == other.text &&
+          selection == other.selection;
+
+  @override
+  int get hashCode => text.hashCode ^ selection.hashCode;
 }
