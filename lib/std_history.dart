@@ -15,3 +15,7 @@ class StdOutHistory extends RunHistory {
 class ServiceHistory extends RunHistory {
   ServiceHistory(String text) : super(text);
 }
+
+class StdErrHistory extends RunHistory {
+  StdErrHistory(String text) : super(text);
+}

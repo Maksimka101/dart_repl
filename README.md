@@ -13,7 +13,9 @@ This is a proof of concept of REPL implementation for dart
 - Shortcuts:
     - run with `command + r`
     - copy whole line with `command + c` without selection
+    - delete whole line with `command + x` without selection
     - undo with `command + z`
+    - jump to the next line `shift + return`
 
 ## Roadmap
 - Better code editor

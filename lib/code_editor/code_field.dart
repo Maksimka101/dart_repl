@@ -1,10 +1,14 @@
 import 'dart:ui';
 
-import 'package:dart_repl/code_field_controller.dart';
+import 'package:dart_repl/code_editor/_text_field_copy.dart';
+import 'package:dart_repl/code_editor/code_controller/code_field_controller.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// Code field with custom [CodeEditingController] and [TextCodeField].
+/// [CodeEditingController] is used to highlight syntax
+/// [TextCodeField] is used to disable un focus on Tab
 class CodeField extends TextField {
   const CodeField({
     Key key,

@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:dart_repl/code_editor.dart';
-import 'package:dart_repl/code_field_controller.dart';
+import 'package:dart_repl/code_editor/code_editor.dart';
+import 'package:dart_repl/code_editor/code_controller/code_field_controller.dart';
 import 'package:dart_repl/std_history.dart';
-import 'package:dart_repl/syntax_highlighter.dart';
+import 'package:dart_repl/code_editor/syntax_highlighter.dart';
 import 'package:desktop_window/desktop_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -12,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  DesktopWindow.setWindowSize(Size(400, 600));
+  DesktopWindow.setWindowSize(Size(510, 620));
   DesktopWindow.setMinWindowSize(Size(300, 300));
   runApp(EditorApp());
 }
@@ -22,12 +22,15 @@ class EditorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-        textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
-        brightness: Brightness.dark,
+    return DefaultTextStyle(
+      style: TextStyle(fontFamily: 'JetBrainsMono'),
+      child: MaterialApp(
+        theme: ThemeData(
+          textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
+          brightness: Brightness.dark,
+        ),
+        home: EditorScreen(),
       ),
-      home: EditorScreen(),
     );
   }
 }
@@ -58,6 +61,9 @@ class _EditorScreenState extends State<EditorScreen> {
     _runHistory.add(StdInHistory(_stdInController.text));
     _stdInController.text = "";
     setState(() {});
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+      FocusScope.of(context).requestFocus(_stdInFocus);
+    });
   }
 
   void _onRunTapped() {
@@ -65,6 +71,8 @@ class _EditorScreenState extends State<EditorScreen> {
       _onRun();
     } else {
       _replProcess.kill();
+      _replProcess = null;
+      setState(() {});
     }
   }
 
@@ -73,6 +81,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final replFile = File("${directory.path}/dart_repl.dart");
     await replFile.writeAsString(_codeController.text);
     _replProcess = await Process.start('dart', [replFile.path]);
+    _runHistory.add(ServiceHistory("Program is started"));
     setState(() {});
 
     _replProcess.stdout
@@ -85,6 +94,13 @@ class _EditorScreenState extends State<EditorScreen> {
       FocusScope.of(context).requestFocus(_stdInFocus);
     });
 
+    _replProcess.stderr
+        .map((event) => String.fromCharCodes(event))
+        .listen((event) {
+      _runHistory.add(StdErrHistory(event));
+      setState(() {});
+    });
+
     _replProcess.exitCode.then((value) {
       _runHistory.add(ServiceHistory("Process finished with exit code $value"));
       _replProcess = null;
@@ -94,11 +110,13 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildUserInput() {
     return TextField(
+      key: Key("std in input"),
       controller: _stdInController,
       onEditingComplete: _onAddToStd,
       decoration: InputDecoration(
         border: InputBorder.none,
       ),
+      autofocus: true,
       focusNode: _stdInFocus,
     );
   }
@@ -124,9 +142,13 @@ class _EditorScreenState extends State<EditorScreen> {
             );
           } else if (e is StdOutHistory) {
             return Text(e.text);
+          } else if (e is StdErrHistory) {
+            return Text(e.text, style: TextStyle(color: Colors.red));
           } else {
-            return Text(e.text,
-                style: TextStyle(color: Colors.lightGreenAccent));
+            return Text(
+              e.text,
+              style: TextStyle(color: Colors.lightGreenAccent),
+            );
           }
         }),
         if (_replProcess != null)
@@ -147,16 +169,18 @@ class _EditorScreenState extends State<EditorScreen> {
         title: Text("Dart R.E.P.L."),
         toolbarHeight: 45,
       ),
-      body: ListView(
-        padding: EdgeInsets.all(8),
-        children: [
-          CodeEditor(
-            onRun: _onRunTapped,
-            editorFocusNode: _editorFocus,
-            codeController: _codeController,
-          ),
-          _buildStdHistory(),
-        ],
+      body: Scrollbar(
+        child: ListView(
+          padding: EdgeInsets.all(8),
+          children: [
+            CodeEditor(
+              onRun: _onRunTapped,
+              editorFocusNode: _editorFocus,
+              codeController: _codeController,
+            ),
+            _buildStdHistory(),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(_replProcess == null ? Icons.play_arrow : Icons.pause),

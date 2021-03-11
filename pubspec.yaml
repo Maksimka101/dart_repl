@@ -23,5 +23,10 @@ dev_dependencies:
     sdk: flutter
 
 flutter:
-
+  fonts:
+    - family: JetBrainsMono
+      fonts:
+        - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf
+        - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Italic.ttf
+          style: italic
   uses-material-design: true

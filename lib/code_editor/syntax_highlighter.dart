@@ -4,25 +4,12 @@ import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/token.dart';
 
 abstract class SyntaxHighlighter {
-  /// Generates syntax highglighted text as list of `TextSpan` object.
+  /// Generates syntax highlighted text as list of `TextSpan` object.
   List<TextSpan> parseText(TextEditingValue tev);
-
-  /// Insert text programatically/remotely. Method should return new TextEditingValue with inserted text.
-  TextEditingValue addTextRemotely(TextEditingValue oldValue, String newText) =>
-      oldValue;
-
-  /// Handler to support enter press event.
-  /// Can be used to add extra tab indents on enter press.
-  TextEditingValue onEnterPress(TextEditingValue oldValue) => oldValue;
-
-  /// Handler to support backspace press event.
-  /// Can be used to remove extra tab indents on backspace press.
-  TextEditingValue onBackSpacePress(
-          TextEditingValue oldValue, TextSpan currentSpan) =>
-      oldValue;
 }
 
 class DartSyntaxHighLighter extends SyntaxHighlighter {
+
   @override
   List<TextSpan> parseText(TextEditingValue tev) {
     var sourceCode = tev.text;
@@ -118,4 +105,5 @@ class DartSyntaxHighLighter extends SyntaxHighlighter {
 
     return spans;
   }
+
 }

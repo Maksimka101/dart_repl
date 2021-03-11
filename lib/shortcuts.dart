@@ -12,20 +12,27 @@ class ShortcutPredictor {
         }
       }
 
-      // copy
       if (keyEvent.isKeyPressed(LogicalKeyboardKey.keyC)) {
         return ShortcutType.copy;
       }
 
-      // cut
       if (keyEvent.isKeyPressed(LogicalKeyboardKey.keyX)) {
         return ShortcutType.cut;
       }
 
-      // run
       if (keyEvent.isKeyPressed(LogicalKeyboardKey.keyR)) {
         return ShortcutType.run;
       }
+    }
+
+    if (keyEvent.isShiftPressed) {
+      if (keyEvent.isKeyPressed(LogicalKeyboardKey.enter)) {
+        return ShortcutType.jumpToNextLine;
+      }
+    }
+
+    if (keyEvent.isKeyPressed(LogicalKeyboardKey.tab)) {
+      return ShortcutType.tab;
     }
 
     return ShortcutType.none;
@@ -47,6 +54,12 @@ enum ShortcutType {
 
   /// command + r
   run,
+
+  /// shift + return
+  jumpToNextLine,
+
+  ///  tab
+  tab,
 
   /// if no shortcut found
   none,

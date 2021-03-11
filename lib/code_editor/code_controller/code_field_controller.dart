@@ -1,11 +1,20 @@
-import 'package:dart_repl/syntax_highlighter.dart';
+import 'package:dart_repl/code_editor/code_controller/clipboard_mixin.dart';
+import 'package:dart_repl/code_editor/code_history.dart';
+import 'package:dart_repl/code_editor/code_controller/code_completion_mixin.dart';
+import 'package:dart_repl/code_editor/code_controller/code_history_mixin.dart';
+import 'package:dart_repl/code_editor/code_controller/code_navigation_mixin.dart';
+import 'package:dart_repl/code_editor/syntax_highlighter.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 class CodeEditingController extends ValueNotifier<TextEditingValue>
+    with
+        CodeCompletionManager,
+        CodeHistoryManager,
+        CodeNavigationManager,
+        ClipboardManager
     implements TextEditingController {
-  final SyntaxHighlighter syntaxHighlighter;
-
   /// Creates a controller for an editable text field.
   ///
   /// This constructor treats a null [text] argument as if it were the empty
@@ -13,21 +22,22 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   CodeEditingController(this.syntaxHighlighter, {String text})
       : super(text == null
             ? TextEditingValue.empty
-            : TextEditingValue(text: text));
+            : TextEditingValue(text: text)) {
+    initializeCodeCompletion();
+  }
 
   /// Creates a controller for an editable text field from an initial [TextEditingValue].
   ///
   /// This constructor treats a null [value] argument as if it were
   /// [TextEditingValue.empty].
   CodeEditingController.fromValue(
-      TextEditingValue value, this.syntaxHighlighter)
-      : super(value ?? TextEditingValue.empty) {
-    addListener(() {
-      print("Text changed");
-    });
+    TextEditingValue value,
+    this.syntaxHighlighter,
+  ) : super(value ?? TextEditingValue.empty) {
+    initializeCodeCompletion();
   }
 
-  final _codeHistory = CodeHistory();
+  final SyntaxHighlighter syntaxHighlighter;
 
   /// The current string the user is editing.
   String get text => value.text;
@@ -54,15 +64,11 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// By default makes text in composing range appear as underlined.
   /// Descendants can override this method to customize appearance of text.
   TextSpan buildTextSpan({TextStyle style, bool withComposing}) {
-    // if (!value.composing.isValid || !withComposing) {
-    //   return TextSpan(style: style, text: text);
-    // }
+    addHistory(CodeHistoryNode(value.text, value.selection));
 
-    _codeHistory.add(CodeHistoryNode(value.text, value.selection));
+    final spans = syntaxHighlighter.parseText(value);
 
-    var lsSpans = syntaxHighlighter.parseText(value);
-
-    return TextSpan(style: style, children: lsSpans);
+    return TextSpan(style: style, children: spans);
   }
 
   /// The currently selected [text].
@@ -101,48 +107,6 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
     value = TextEditingValue.empty;
   }
 
-  /// Set previous state of text
-  void undo() {
-    final previous = _codeHistory.previous();
-    if (previous != null) {
-      value = TextEditingValue(
-        text: previous.text,
-        selection: previous.selection,
-      );
-    }
-  }
-
-  /// If text selected then copy selected text [implicitly by flutter]
-  /// If text is not selected copy all string
-  void copyText() {
-    if (selection.isCollapsed) {
-      final rawText = text;
-      final cursorIndex = selection.start;
-      var beforeCursor = cursorIndex;
-      var afterCursor = cursorIndex;
-      for (;
-          beforeCursor != -1 && rawText[beforeCursor] != '\n';
-          beforeCursor--) {}
-      for (;
-          afterCursor != rawText.length && rawText[afterCursor] != '\n';
-          afterCursor++) {}
-      final line = "\n${rawText.substring(beforeCursor++, afterCursor)}\n";
-
-      Clipboard.setData(ClipboardData(text: line));
-      Clipboard.getData(Clipboard.kTextPlain).then((value) => print(value.text));
-      selection = TextSelection(
-        baseOffset: beforeCursor,
-        extentOffset: afterCursor,
-      );
-    }
-  }
-
-  /// Set next state of text
-  /// Now id doesn't work
-  void restore() {
-    // todo: implement restore
-  }
-
   /// Check that the [selection] is inside of the bounds of [text].
   bool isSelectionWithinTextBounds(TextSelection selection) {
     return selection.start <= text.length && selection.end <= text.length;
@@ -161,59 +125,4 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   void clearComposing() {
     value = value.copyWith(composing: TextRange.empty);
   }
-}
-
-class CodeHistory {
-  CodeHistory([this.capacity = 100]);
-
-  final _historyNodes = <CodeHistoryNode>[];
-  final int capacity;
-  var _currentNodeIndex = -1;
-
-  void add(CodeHistoryNode node) {
-    // If the last node is the same as new node
-    if (_currentNodeIndex != -1 &&
-        (_historyNodes[_currentNodeIndex] == node ||
-            _historyNodes.last == node)) {
-      return;
-    }
-
-    if (_currentNodeIndex + 1 != _historyNodes.length) {
-      _historyNodes.removeRange(_currentNodeIndex + 1, _historyNodes.length);
-    }
-
-    if (_historyNodes.length - 1 == capacity) {
-      _currentNodeIndex--;
-      _historyNodes.removeAt(0);
-    }
-
-    _currentNodeIndex++;
-    _historyNodes.add(node);
-  }
-
-  CodeHistoryNode previous() {
-    if (_currentNodeIndex == -1) {
-      return null;
-    }
-
-    return _historyNodes[_currentNodeIndex--];
-  }
-}
-
-class CodeHistoryNode {
-  CodeHistoryNode(this.text, this.selection);
-
-  final String text;
-  final TextSelection selection;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is CodeHistoryNode &&
-          runtimeType == other.runtimeType &&
-          text == other.text &&
-          selection == other.selection;
-
-  @override
-  int get hashCode => text.hashCode ^ selection.hashCode;
 }

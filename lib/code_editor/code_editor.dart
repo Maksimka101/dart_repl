@@ -1,7 +1,7 @@
-import 'package:dart_repl/code_field.dart';
-import 'package:dart_repl/code_field_controller.dart';
+import 'package:dart_repl/code_editor/code_field.dart';
+import 'package:dart_repl/code_editor/code_controller/code_field_controller.dart';
 import 'package:dart_repl/shortcuts.dart';
-import 'package:dart_repl/syntax_highlighter.dart';
+import 'package:dart_repl/code_editor/syntax_highlighter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -44,7 +44,7 @@ void printHello(String name) {
   print("Hello, ${name.isEmpty ? "world" : name}");
 }
 """;
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_editorFocusNode);
     });
     super.initState();
@@ -55,9 +55,6 @@ void printHello(String name) {
       case ShortcutType.undo:
         _codeController.undo();
         break;
-      case ShortcutType.restore:
-        _codeController.restore();
-        break;
       case ShortcutType.copy:
         _codeController.copyText();
         break;
@@ -65,10 +62,17 @@ void printHello(String name) {
         widget.onRun();
         break;
       case ShortcutType.cut:
-        // TODO: Handle this case.
+        _codeController.cutText();
+        break;
+      case ShortcutType.jumpToNextLine:
+        _codeController.jumpToTheNextLine();
+        break;
+      case ShortcutType.tab:
+        _codeController.addTab();
         break;
       case ShortcutType.none:
-        // TODO: Handle this case.
+        break;
+      case ShortcutType.restore:
         break;
     }
   }
@@ -80,12 +84,20 @@ void printHello(String name) {
       onKey: _onKeyEvent,
       child: CodeField(
         controller: widget.codeController,
-        focusNode: widget.editorFocusNode,
+        focusNode: _editorFocusNode,
         maxLines: null,
         decoration: InputDecoration(
           border: InputBorder.none,
         ),
+        style: TextStyle(fontFamily: 'JetBrainsMono'),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _editorFocusNode.dispose();
+    _codeController.dispose();
+    super.dispose();
   }
 }
