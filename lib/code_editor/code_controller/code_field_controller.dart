@@ -3,6 +3,7 @@ import 'package:dart_repl/code_editor/code_history.dart';
 import 'package:dart_repl/code_editor/code_controller/code_completion_mixin.dart';
 import 'package:dart_repl/code_editor/code_controller/code_history_mixin.dart';
 import 'package:dart_repl/code_editor/code_controller/code_navigation_mixin.dart';
+import 'package:dart_repl/code_editor/keyboard_listener.dart';
 import 'package:dart_repl/code_editor/syntax_highlighter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,25 +20,30 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   ///
   /// This constructor treats a null [text] argument as if it were the empty
   /// string.
-  CodeEditingController(this.syntaxHighlighter, {String text})
+  CodeEditingController(
+      {@required this.syntaxHighlighter,
+      @required this.keyboardListener,
+      String text})
       : super(text == null
             ? TextEditingValue.empty
             : TextEditingValue(text: text)) {
-    initializeCodeCompletion();
+    initializeCodeCompletion(keyboardListener);
   }
 
   /// Creates a controller for an editable text field from an initial [TextEditingValue].
   ///
   /// This constructor treats a null [value] argument as if it were
   /// [TextEditingValue.empty].
-  CodeEditingController.fromValue(
-    TextEditingValue value,
-    this.syntaxHighlighter,
-  ) : super(value ?? TextEditingValue.empty) {
-    initializeCodeCompletion();
+  CodeEditingController.fromValue({
+    @required TextEditingValue value,
+    @required this.keyboardListener,
+    @required this.syntaxHighlighter,
+  }) : super(value ?? TextEditingValue.empty) {
+    initializeCodeCompletion(keyboardListener);
   }
 
   final SyntaxHighlighter syntaxHighlighter;
+  final KeyboardListenerState keyboardListener;
 
   /// The current string the user is editing.
   String get text => value.text;

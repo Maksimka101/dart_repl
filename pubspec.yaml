@@ -17,6 +17,7 @@ dependencies:
   path_provider: ^2.0.1
   cupertino_icons: ^1.0.2
   rich_input: ^1.2.1
+  archive: ^3.1.2
 
 dev_dependencies:
   flutter_test:
@@ -29,4 +30,7 @@ flutter:
         - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Regular.ttf
         - asset: assets/fonts/JetBrainsMono/JetBrainsMono-Italic.ttf
           style: italic
+
+  assets:
+    - assets/templates/
   uses-material-design: true

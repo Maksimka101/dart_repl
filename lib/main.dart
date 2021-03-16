@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:archive/archive_io.dart';
 import 'package:dart_repl/code_editor/code_editor.dart';
 import 'package:dart_repl/code_editor/code_controller/code_field_controller.dart';
+import 'package:dart_repl/code_editor/keyboard_listener.dart';
 import 'package:dart_repl/std_history.dart';
 import 'package:dart_repl/code_editor/syntax_highlighter.dart';
+import 'package:dart_repl/utils/run_mode.dart';
 import 'package:desktop_window/desktop_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -22,14 +25,24 @@ class EditorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTextStyle(
-      style: TextStyle(fontFamily: 'JetBrainsMono'),
-      child: MaterialApp(
-        theme: ThemeData(
-          textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
-          brightness: Brightness.dark,
+    return KeyboardListener(
+      child: DefaultTextStyle(
+        style: TextStyle(fontFamily: 'JetBrainsMono'),
+        child: MaterialApp(
+          theme: ThemeData(
+            textTheme: TextTheme(
+              subtitle1: TextStyle(fontFamily: 'JetBrainsMono'),
+            ),
+            textSelectionTheme: TextSelectionThemeData(
+              cursorColor: Colors.white,
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: InputBorder.none,
+            ),
+            brightness: Brightness.dark,
+          ),
+          home: EditorScreen(),
         ),
-        home: EditorScreen(),
       ),
     );
   }
@@ -44,6 +57,7 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   final _runHistory = <RunHistory>[];
+  final _runMode = RunMode();
   CodeEditingController _codeController;
   final _stdInController = TextEditingController();
   Process _replProcess;
@@ -52,7 +66,10 @@ class _EditorScreenState extends State<EditorScreen> {
 
   @override
   void initState() {
-    _codeController = CodeEditingController(DartSyntaxHighLighter());
+    _codeController = CodeEditingController(
+      syntaxHighlighter: DartSyntaxHighLighter(),
+      keyboardListener: KeyboardListener.instance,
+    );
     super.initState();
   }
 
@@ -78,9 +95,79 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _onRun() async {
     final directory = await getApplicationDocumentsDirectory();
-    final replFile = File("${directory.path}/dart_repl.dart");
-    await replFile.writeAsString(_codeController.text);
-    _replProcess = await Process.start('dart', [replFile.path]);
+    final templatesDirectory = Directory('${directory.path}/templates');
+
+    switch (_runMode.determineRunMode(_codeController.text)) {
+      case RunModeType.dart:
+        if (!Directory(
+          "${templatesDirectory.path}/dart_repl_template",
+        ).existsSync()) {
+          final templateZip =
+              await rootBundle.load('assets/templates/dart_repl_template.zip');
+          final archive =
+              ZipDecoder().decodeBytes(templateZip.buffer.asUint8List());
+          for (final file in archive) {
+            final dir = "${templatesDirectory.path}/${file.name}";
+            if (file.isFile) {
+              final data = file.content as List<int>;
+              File(dir)
+                ..createSync(recursive: true)
+                ..writeAsBytesSync(data);
+            } else {
+              Directory(dir).createSync(recursive: true);
+            }
+          }
+        }
+        final replFile = File(
+            "${templatesDirectory.path}/dart_repl_template/src/dart_repl.dart");
+        await replFile.create(recursive: true);
+        await replFile.writeAsString(_codeController.text);
+        final pubGet = await Process.run(
+          'pub',
+          ['get'],
+          workingDirectory: "${templatesDirectory.path}/dart_repl_template/",
+        );
+        print('Pub get output');
+        print(pubGet.stdout);
+        _replProcess = await Process.start('dart', [replFile.path]);
+        break;
+      case RunModeType.flutter:
+        if (!Directory(
+          "${templatesDirectory.path}/flutter_repl_template",
+        ).existsSync()) {
+          final templateZip = await rootBundle
+              .load('assets/templates/flutter_repl_template.zip');
+          final archive =
+              ZipDecoder().decodeBytes(templateZip.buffer.asUint8List());
+          for (final file in archive) {
+            final dir = "${templatesDirectory.path}/${file.name}";
+            if (file.isFile) {
+              final data = file.content as List<int>;
+              File(dir)
+                ..createSync(recursive: true)
+                ..writeAsBytesSync(data);
+            } else {
+              Directory(dir).createSync(recursive: true);
+            }
+          }
+        }
+        final replFile = File(
+            "${templatesDirectory.path}/flutter_repl_template/lib/main.dart");
+        await replFile.create(recursive: true);
+        await replFile.writeAsString(_codeController.text);
+
+        await Process.run('flutter', ['config', '--enable-windows-desktop']);
+        await Process.run('flutter', ['config', '--enable-macos-desktop']);
+        await Process.run('flutter', ['config', '--enable-linux-desktop']);
+
+        _replProcess = await Process.start(
+          'flutter',
+          ['run'],
+          workingDirectory: "${templatesDirectory.path}/flutter_repl_template",
+        );
+        break;
+    }
+
     _runHistory.add(ServiceHistory("Program is started"));
     setState(() {});
 

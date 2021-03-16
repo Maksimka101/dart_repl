@@ -1,0 +1,11 @@
+name: dart_repl_template
+description: A simple dart repl template
+
+environment:
+  sdk: '>=2.10.0 <3.0.0'
+
+dependencies:
+  dio: ^3.0.10
+
+dev_dependencies:
+  pedantic: ^1.9.0

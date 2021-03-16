@@ -23,4 +23,5 @@ This is a proof of concept of REPL implementation for dart
 - Refactor
 - Suggestions
 - Settings
+- Flutter mode
 

@@ -1,9 +1,25 @@
+import 'dart:async';
+
 import 'package:dart_repl/code_editor/code_field.dart';
 import 'package:dart_repl/code_editor/code_controller/code_field_controller.dart';
+import 'package:dart_repl/code_editor/keyboard_listener.dart';
 import 'package:dart_repl/shortcuts.dart';
 import 'package:dart_repl/code_editor/syntax_highlighter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
+const _initialCode = r"""
+import 'dart:io';
+
+void main() {
+  final name = stdin.readLineSync();
+  printHello(name);
+}
+
+void printHello(String name) {
+  print("Hello, ${name.isEmpty ? "world" : name}");
+}
+""";
 
 class CodeEditor extends StatefulWidget {
   const CodeEditor({
@@ -24,26 +40,22 @@ class _CodeEditorState extends State<CodeEditor> {
   CodeEditingController _codeController;
   FocusNode _editorFocusNode;
   final _shortcutsPredictor = ShortcutPredictor();
+  StreamSubscription<RawKeyEvent> _keyEventSubscription;
 
   @override
   void initState() {
     _codeController = widget.codeController ??
         CodeEditingController(
-          DartSyntaxHighLighter(),
+          syntaxHighlighter: DartSyntaxHighLighter(),
+          keyboardListener: KeyboardListener.instance,
         );
     _editorFocusNode = widget.editorFocusNode ?? FocusNode();
-    _codeController.text = r"""
-import 'dart:io';
 
-void main() {
-  final name = stdin.readLineSync();
-  printHello(name);
-}
+    _codeController.text = _initialCode;
 
-void printHello(String name) {
-  print("Hello, ${name.isEmpty ? "world" : name}");
-}
-""";
+    _keyEventSubscription =
+        KeyboardListener.instance.keyEvents.listen(_onKeyEvent);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_editorFocusNode);
     });
@@ -79,17 +91,12 @@ void printHello(String name) {
 
   @override
   Widget build(BuildContext context) {
-    return RawKeyboardListener(
-      focusNode: FocusNode(),
-      onKey: _onKeyEvent,
-      child: CodeField(
-        controller: widget.codeController,
-        focusNode: _editorFocusNode,
-        maxLines: null,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-        ),
-        style: TextStyle(fontFamily: 'JetBrainsMono'),
+    return CodeField(
+      controller: widget.codeController,
+      focusNode: _editorFocusNode,
+      maxLines: null,
+      decoration: InputDecoration(
+        border: InputBorder.none,
       ),
     );
   }
@@ -97,7 +104,7 @@ void printHello(String name) {
   @override
   void dispose() {
     _editorFocusNode.dispose();
-    _codeController.dispose();
+    _keyEventSubscription.cancel();
     super.dispose();
   }
 }
