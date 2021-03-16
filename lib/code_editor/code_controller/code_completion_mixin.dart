@@ -65,7 +65,7 @@ mixin CodeCompletionManager on ValueNotifier<TextEditingValue> {
         final previousLinePadding = _getPreviousLinePadding();
         _lastValue = "${rawText.substring(0, cursorIndex)}"
             "${' ' * previousLinePadding}  "
-            "${containsCloseBracket ? '\n' + ' ' * previousLinePadding : ''}"
+            "${containsCloseBracket ? '\n${' ' * previousLinePadding}' : ''}"
             "${rawText.substring(cursorIndex)}";
         value = value.copyWith(
           text: _lastValue,

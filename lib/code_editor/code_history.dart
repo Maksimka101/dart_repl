@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
 class CodeHistory {
@@ -37,8 +38,9 @@ class CodeHistory {
   }
 }
 
+@immutable
 class CodeHistoryNode {
-  CodeHistoryNode(this.text, this.selection);
+  const CodeHistoryNode(this.text, this.selection);
 
   final String text;
   final TextSelection selection;

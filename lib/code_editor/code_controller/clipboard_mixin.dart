@@ -19,7 +19,7 @@ mixin ClipboardManager on ValueNotifier<TextEditingValue> {
               baseOffset: cursorIndex - 1,
             ),
           );
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           return;
         } else {
           cursorIndex--;
@@ -30,7 +30,7 @@ mixin ClipboardManager on ValueNotifier<TextEditingValue> {
       if (rawText[cursorIndex] == '\n') {
         // if cursor at the start of the line and line is empty
         if (cursorIndex == 0) {
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           value = value.copyWith(text: rawText.substring(1));
           return;
         }
@@ -44,7 +44,7 @@ mixin ClipboardManager on ValueNotifier<TextEditingValue> {
               extentOffset: cursorIndex - 1,
             ),
           );
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           return;
         }
         // if cursor at the end of the line but line is not empty
@@ -85,7 +85,7 @@ mixin ClipboardManager on ValueNotifier<TextEditingValue> {
       // if cursor at the end of the text
       if (rawText.length == cursorIndex) {
         if (rawText[cursorIndex - 1] == '\n') {
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           return;
         } else {
           cursorIndex--;
@@ -96,12 +96,12 @@ mixin ClipboardManager on ValueNotifier<TextEditingValue> {
       if (rawText[cursorIndex] == '\n') {
         // if cursor at the start of the line and line is empty
         if (cursorIndex == 0) {
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           return;
         }
         // if line is empty
         else if (rawText[cursorIndex - 1] == '\n') {
-          Clipboard.setData(ClipboardData(text: '\n'));
+          Clipboard.setData(const ClipboardData(text: '\n'));
           return;
         }
         // if cursor at the end of the line but line is not empty

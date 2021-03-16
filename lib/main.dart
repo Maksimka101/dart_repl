@@ -15,9 +15,9 @@ import 'package:path_provider/path_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  DesktopWindow.setWindowSize(Size(510, 620));
-  DesktopWindow.setMinWindowSize(Size(300, 300));
-  runApp(EditorApp());
+  DesktopWindow.setWindowSize(const Size(510, 620));
+  DesktopWindow.setMinWindowSize(const Size(300, 300));
+  runApp(const EditorApp());
 }
 
 class EditorApp extends StatelessWidget {
@@ -27,21 +27,21 @@ class EditorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return KeyboardListener(
       child: DefaultTextStyle(
-        style: TextStyle(fontFamily: 'JetBrainsMono'),
+        style: const TextStyle(fontFamily: 'JetBrainsMono'),
         child: MaterialApp(
           theme: ThemeData(
-            textTheme: TextTheme(
+            textTheme: const TextTheme(
               subtitle1: TextStyle(fontFamily: 'JetBrainsMono'),
             ),
-            textSelectionTheme: TextSelectionThemeData(
+            textSelectionTheme: const TextSelectionThemeData(
               cursorColor: Colors.white,
             ),
-            inputDecorationTheme: InputDecorationTheme(
+            inputDecorationTheme: const InputDecorationTheme(
               border: InputBorder.none,
             ),
             brightness: Brightness.dark,
           ),
-          home: EditorScreen(),
+          home: const EditorScreen(),
         ),
       ),
     );
@@ -93,6 +93,8 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
+  File _replFile(String directory) => File("$directory/main.dart");
+
   Future<void> _onRun() async {
     final directory = await getApplicationDocumentsDirectory();
     final templatesDirectory = Directory('${directory.path}/templates');
@@ -118,17 +120,15 @@ class _EditorScreenState extends State<EditorScreen> {
             }
           }
         }
-        final replFile = File(
-            "${templatesDirectory.path}/dart_repl_template/src/dart_repl.dart");
+        final replFile =
+            _replFile("${templatesDirectory.path}/dart_repl_template/src");
         await replFile.create(recursive: true);
         await replFile.writeAsString(_codeController.text);
-        final pubGet = await Process.run(
+        await Process.run(
           'pub',
           ['get'],
           workingDirectory: "${templatesDirectory.path}/dart_repl_template/",
         );
-        print('Pub get output');
-        print(pubGet.stdout);
         _replProcess = await Process.start('dart', [replFile.path]);
         break;
       case RunModeType.flutter:
@@ -188,19 +188,36 @@ class _EditorScreenState extends State<EditorScreen> {
       setState(() {});
     });
 
-    _replProcess.exitCode.then((value) {
+    await _replProcess.exitCode.then((value) {
       _runHistory.add(ServiceHistory("Process finished with exit code $value"));
       _replProcess = null;
       setState(() {});
     });
   }
 
+  Future<void> _onReformat() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final replFile = _replFile(directory.path);
+    if (!directory.existsSync()) {
+      await replFile.create();
+    }
+    await replFile.writeAsString(_codeController.text);
+    await Process.run('dart', [
+      'format',
+      replFile.path,
+    ]);
+    return _codeController.value = TextEditingValue(
+      selection: _codeController.selection,
+      text: await replFile.readAsString(),
+    );
+  }
+
   Widget _buildUserInput() {
     return TextField(
-      key: Key("std in input"),
+      key: const Key("std in input"),
       controller: _stdInController,
       onEditingComplete: _onAddToStd,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         border: InputBorder.none,
       ),
       autofocus: true,
@@ -209,7 +226,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Widget _buildUserInputPrefix() {
-    return Text(
+    return const Text(
       ">>> ",
       style: TextStyle(color: Colors.purple),
     );
@@ -230,11 +247,11 @@ class _EditorScreenState extends State<EditorScreen> {
           } else if (e is StdOutHistory) {
             return Text(e.text);
           } else if (e is StdErrHistory) {
-            return Text(e.text, style: TextStyle(color: Colors.red));
+            return Text(e.text, style: const TextStyle(color: Colors.red));
           } else {
             return Text(
               e.text,
-              style: TextStyle(color: Colors.lightGreenAccent),
+              style: const TextStyle(color: Colors.lightGreenAccent),
             );
           }
         }),
@@ -253,14 +270,15 @@ class _EditorScreenState extends State<EditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dart R.E.P.L."),
+        title: const Text("Dart R.E.P.L."),
         toolbarHeight: 45,
       ),
       body: Scrollbar(
         child: ListView(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           children: [
             CodeEditor(
+              onReformat: _onReformat,
               onRun: _onRunTapped,
               editorFocusNode: _editorFocus,
               codeController: _codeController,
@@ -270,8 +288,8 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(_replProcess == null ? Icons.play_arrow : Icons.pause),
         onPressed: _onRunTapped,
+        child: Icon(_replProcess == null ? Icons.play_arrow : Icons.pause),
       ),
     );
   }

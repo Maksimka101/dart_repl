@@ -1677,7 +1677,7 @@ class EditableCodeState extends State<EditableCode>
       return RevealedOffset(offset: _scrollController.offset, rect: rect);
 
     final Size editableSize = renderEditable.size;
-    double additionalOffset;
+    num additionalOffset;
     Offset unitOffset;
 
     if (!_isMultiline) {
@@ -1707,7 +1707,7 @@ class EditableCodeState extends State<EditableCode>
 
     // No overscrolling when encountering tall fonts/scripts that extend past
     // the ascent.
-    final double targetOffset =
+    final num targetOffset =
         (additionalOffset + _scrollController.offset).clamp(
       _scrollController.position.minScrollExtent,
       _scrollController.position.maxScrollExtent,
@@ -1715,7 +1715,7 @@ class EditableCodeState extends State<EditableCode>
 
     final double offsetDelta = _scrollController.offset - targetOffset;
     return RevealedOffset(
-        rect: rect.shift(unitOffset * offsetDelta), offset: targetOffset);
+        rect: rect.shift(unitOffset * offsetDelta), offset: targetOffset.toDouble());
   }
 
   bool get _hasInputConnection => _textInputConnection?.attached ?? false;

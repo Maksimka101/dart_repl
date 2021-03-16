@@ -16,6 +16,7 @@ This is a proof of concept of REPL implementation for dart
     - delete whole line with `command + x` without selection
     - undo with `command + z`
     - jump to the next line `shift + return`
+    - reformat code with `command + option + l`
 
 ## Roadmap
 - Better code editor

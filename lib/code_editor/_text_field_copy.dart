@@ -997,10 +997,10 @@ class _TextCodeFieldState extends State<TextCodeField>
     if (widget.maxLength > 0) {
       // Show the maxLength in the counter
       counterText += '/${widget.maxLength}';
-      final int remaining =
+      final remaining =
           (widget.maxLength - currentLength).clamp(0, widget.maxLength);
       semanticCounterText =
-          localizations.remainingTextFieldCharacterCount(remaining);
+          localizations.remainingTextFieldCharacterCount(remaining.toInt());
     }
 
     if (_hasIntrinsicError) {
@@ -1108,13 +1108,15 @@ class _TextCodeFieldState extends State<TextCodeField>
   bool _shouldShowSelectionHandles(SelectionChangedCause cause) {
     // When the text field is activated by something that doesn't trigger the
     // selection overlay, we shouldn't show the handles either.
-    if (!_selectionGestureDetectorBuilder.shouldShowSelectionToolbar)
+    if (!_selectionGestureDetectorBuilder.shouldShowSelectionToolbar) {
       return false;
+    }
 
     if (cause == SelectionChangedCause.keyboard) return false;
 
-    if (widget.readOnly && _effectiveController.selection.isCollapsed)
+    if (widget.readOnly && _effectiveController.selection.isCollapsed) {
       return false;
+    }
 
     if (!_isEnabled) return false;
 
@@ -1324,7 +1326,7 @@ class _TextCodeFieldState extends State<TextCodeField>
     if (widget.decoration != null) {
       child = AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[focusNode, controller]),
-        builder: (BuildContext context, Widget child) {
+        builder: (context, child) {
           return InputDecorator(
             decoration: _getEffectiveDecoration(),
             baseStyle: widget.style,
@@ -1363,23 +1365,24 @@ class _TextCodeFieldState extends State<TextCodeField>
 
     child = MouseRegion(
       cursor: effectiveMouseCursor,
-      onEnter: (PointerEnterEvent event) => _handleHover(true),
-      onExit: (PointerExitEvent event) => _handleHover(false),
+      onEnter: (event) => _handleHover(true),
+      onExit: (event) => _handleHover(false),
       child: IgnorePointer(
         ignoring: !_isEnabled,
         child: AnimatedBuilder(
           animation: controller, // changes the _currentLength
-          builder: (BuildContext context, Widget child) {
+          builder: (context, child) {
             return Semantics(
               maxValueLength: semanticsMaxValueLength,
               currentValueLength: _currentLength,
               onTap: widget.readOnly
                   ? null
                   : () {
-                      if (!_effectiveController.selection.isValid)
+                      if (!_effectiveController.selection.isValid) {
                         _effectiveController.selection =
                             TextSelection.collapsed(
                                 offset: _effectiveController.text.length);
+                      }
                       _requestKeyboard();
                     },
               child: child,

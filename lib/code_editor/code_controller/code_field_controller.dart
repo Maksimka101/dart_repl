@@ -46,6 +46,7 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   final KeyboardListenerState keyboardListener;
 
   /// The current string the user is editing.
+  @override
   String get text => value.text;
 
   /// Setting this will notify all the listeners of this [TextEditingController]
@@ -57,6 +58,7 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// [TextEditingController]; however, one should not also set [selection]
   /// in a separate statement. To change both the [text] and the [selection]
   /// change the controller's [value].
+  @override
   set text(String newText) {
     value = value.copyWith(
       text: newText,
@@ -69,6 +71,7 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   ///
   /// By default makes text in composing range appear as underlined.
   /// Descendants can override this method to customize appearance of text.
+  @override
   TextSpan buildTextSpan({TextStyle style, bool withComposing}) {
     addHistory(CodeHistoryNode(value.text, value.selection));
 
@@ -81,6 +84,7 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   ///
   /// If the selection is collapsed, then this property gives the offset of the
   /// cursor within the text.
+  @override
   TextSelection get selection => value.selection;
 
   /// Setting this will notify all the listeners of this [TextEditingController]
@@ -92,11 +96,13 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// [TextEditingController]; however, one should not also set [text]
   /// in a separate statement. To change both the [text] and the [selection]
   /// change the controller's [value].
+  @override
   set selection(TextSelection newSelection) {
-    if (!isSelectionWithinTextBounds(newSelection))
+    if (!isSelectionWithinTextBounds(newSelection)) {
       throw FlutterError.fromParts(<DiagnosticsNode>[
         ErrorSummary('invalid text selection: $newSelection')
       ]);
+    }
     value = value.copyWith(selection: newSelection, composing: TextRange.empty);
   }
 
@@ -109,11 +115,13 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// that they need to update (it calls [notifyListeners]). For this reason,
   /// this method should only be called between frames, e.g. in response to user
   /// actions, not during the build, layout, or paint phases.
+  @override
   void clear() {
     value = TextEditingValue.empty;
   }
 
   /// Check that the [selection] is inside of the bounds of [text].
+  @override
   bool isSelectionWithinTextBounds(TextSelection selection) {
     return selection.start <= text.length && selection.end <= text.length;
   }
@@ -128,6 +136,7 @@ class CodeEditingController extends ValueNotifier<TextEditingValue>
   /// that they need to update (it calls [notifyListeners]). For this reason,
   /// this method should only be called between frames, e.g. in response to user
   /// actions, not during the build, layout, or paint phases.
+  @override
   void clearComposing() {
     value = value.copyWith(composing: TextRange.empty);
   }

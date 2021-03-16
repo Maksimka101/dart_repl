@@ -4,13 +4,14 @@ import 'package:flutter/widgets.dart';
 
 /// This widget helps receive keyboard event
 class KeyboardListener extends StatefulWidget {
-  KeyboardListener({@required this.child});
+  const KeyboardListener({@required this.child});
 
   static KeyboardListenerState instance;
 
   final Widget child;
 
   @override
+  // ignore: no_logic_in_create_state
   KeyboardListenerState createState() => instance = KeyboardListenerState();
 }
 

@@ -23,6 +23,10 @@ class ShortcutPredictor {
       if (keyEvent.isKeyPressed(LogicalKeyboardKey.keyR)) {
         return ShortcutType.run;
       }
+
+      if (keyEvent.isAltPressed && keyEvent.isKeyPressed(LogicalKeyboardKey.keyL)) {
+        return ShortcutType.reformatCode;
+      }
     }
 
     if (keyEvent.isShiftPressed) {
@@ -60,6 +64,9 @@ enum ShortcutType {
 
   ///  tab
   tab,
+
+  /// command + option + l
+  reformatCode,
 
   /// if no shortcut found
   none,

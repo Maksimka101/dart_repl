@@ -25,12 +25,14 @@ class CodeEditor extends StatefulWidget {
   const CodeEditor({
     @required this.editorFocusNode,
     @required this.onRun,
+    @required this.onReformat,
     this.codeController,
   });
 
   final FocusNode editorFocusNode;
   final CodeEditingController codeController;
   final void Function() onRun;
+  final void Function() onReformat;
 
   @override
   _CodeEditorState createState() => _CodeEditorState();
@@ -86,6 +88,9 @@ class _CodeEditorState extends State<CodeEditor> {
         break;
       case ShortcutType.restore:
         break;
+      case ShortcutType.reformatCode:
+        widget.onReformat();
+        break;
     }
   }
 
@@ -95,7 +100,7 @@ class _CodeEditorState extends State<CodeEditor> {
       controller: widget.codeController,
       focusNode: _editorFocusNode,
       maxLines: null,
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         border: InputBorder.none,
       ),
     );
